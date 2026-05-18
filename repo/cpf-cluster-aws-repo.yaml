@@ -7,6 +7,6 @@ spec:
   deployment: false
   git:
     branch: main
-    directory: /cpf
+    directory: /
     repo: https://github.com/jhkwak-ntels/cpf-cluster-aws.git
   type: git
