@@ -1,0 +1,12 @@
+apiVersion: config.porch.kpt.dev/v1alpha1
+kind: Repository
+metadata:
+  name: cpf-cluster-aws
+spec:
+  content: Package
+  deployment: false
+  git:
+    branch: main
+    directory: /cpf
+    repo: https://github.com/jhkwak-ntels/cpf-cluster-aws.git
+  type: git
