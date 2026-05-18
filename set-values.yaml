@@ -1,0 +1,285 @@
+apiVersion: fn.kpt.dev/v1alpha1
+kind: StarlarkRun
+metadata: # kpt-merge: /generate-values
+  name: generate-values
+  annotations:
+    config.kubernetes.io/local-config: "true"
+    internal.kpt.dev/upstream-identifier: fn.kpt.dev|StarlarkRun|default|generate-values
+source: |-
+  load("krmfn.star", "krmfn")
+  def set_values(resources):
+    clusterName = ""
+    region = ""
+    sshKeyName = ""
+    controlPlaneMachineType = ""
+    controlPlaneMachineAmiId = ""
+    strControlPlaneMachineRootVolume = ""
+    intControlPlaneMachineRootVolume = 0
+    strControlPlanePublicIP = ""
+    boolControlPlanePublicIP = False
+    workerMachineType = ""
+    workerMachineAmiId = ""
+    strWorkerMachineRootVolume = ""
+    intWorkerMachineRootVolume = 0
+    strWorkerMachinePublicIP = ""
+    boolWorkerMachinePublicIP = False
+    strBastionEnabled = ""
+    boolBastionEnabled = False
+    bastionAmiId = ""
+    strVpcAZUsageLimit = ""
+    intVpcAZUsageLimit = 1
+    vpcId = ""
+    internetGatewayId = ""
+    strSubnetsIds = ""
+    arrSubnetsIds = []
+    securityGroupOverrideControlPlane = ""
+    securityGroupOverrideApiserverLB = ""
+    securityGroupOverrideNode = ""
+    securityGroupOverrideLB = ""
+    securityGroupOverrideBastion = ""
+
+    print(">>> DEBUG >>> cluster-capi-aws.set_values >>> START")
+    for r in resources:
+      print(">>> DEBUG >>> r:", r)
+      if krmfn.match_gvk(r, "v1", "ConfigMap") and krmfn.match_name(r, "kptfile.kpt.dev"):
+        clusterName = r["data"]["name"]
+        print(">>> DEBUG >>> data.clusterName:", clusterName)
+
+        if "region" in r["data"]:
+          if type(r['data']['region']) == "string":
+            region = r['data']['region']
+          print(">>> DEBUG >>> data.region:", region)
+
+        if "sshKeyName" in r["data"]:
+          if type(r['data']['sshKeyName']) == "string":
+            sshKeyName = r['data']['sshKeyName']
+          print(">>> DEBUG >>> data.sshKeyName:", sshKeyName)
+
+        if "controlPlaneMachineType" in r["data"]:
+          if type(r['data']['controlPlaneMachineType']) == "string":
+            controlPlaneMachineType = r['data']['controlPlaneMachineType']
+          print(">>> DEBUG >>> data.controlPlaneMachineType:", controlPlaneMachineType)
+
+        if "controlPlaneMachineAmiId" in r["data"]:
+          if type(r['data']['controlPlaneMachineAmiId']) == "string":
+            controlPlaneMachineAmiId = r['data']['controlPlaneMachineAmiId']
+          print(">>> DEBUG >>> data.controlPlaneMachineAmiId:", controlPlaneMachineAmiId)
+
+        if "controlPlaneMachineRootVolume" in r["data"]:
+          # int 으로 넘어올 수 있으므로 무조건 string 으로 변환 후 처리, 혹시 공백과 따옴표가 붙어올 수 있으므로 제거
+          strControlPlaneMachineRootVolume = str(r['data']['controlPlaneMachineRootVolume']).strip(" \"")
+          if len(strControlPlaneMachineRootVolume) > 0 :
+            print(">>> DEBUG >>> data.strControlPlaneMachineRootVolume:", strControlPlaneMachineRootVolume, ",Compare:", int(strControlPlaneMachineRootVolume))
+            # packageContext.data 에서는 string 으로 처리되지만, topology 에서는 int 으로 정의되어 있어서 type 변환
+            intControlPlaneMachineRootVolume = int(strControlPlaneMachineRootVolume)
+          else:
+            print(">>> DEBUG >>> data.strControlPlaneMachineRootVolume:", strControlPlaneMachineRootVolume, ",Compare: nil")
+          print(">>> DEBUG >>> data.controlPlaneMachineRootVolume:", intControlPlaneMachineRootVolume)
+
+        if "controlPlanePublicIP" in r["data"]:
+          # bool 으로 넘어올 수 있으므로 무조건 string 으로 변환 후 처리, 혹시 공백과 따옴표가 붙어올 수 있으므로 제거
+          strControlPlanePublicIP = str(r['data']['controlPlanePublicIP']).strip(" \"")
+          if len(strControlPlanePublicIP) > 0 :
+            print(">>> DEBUG >>> data.strControlPlanePublicIP:", strControlPlanePublicIP, ",Compare:", bool(strControlPlanePublicIP.upper() == "TRUE"))
+            # packageContext.data 에서는 string 으로 처리되지만, topology 에서는 boolean으로 정의되어 있어서 type 변환
+            boolControlPlanePublicIP = bool(strControlPlanePublicIP.upper() == "TRUE")
+          else:
+            print(">>> DEBUG >>> data.strControlPlanePublicIP:", strControlPlanePublicIP, ",Compare: nil")
+          print(">>> DEBUG >>> data.controlPlanePublicIP:", boolControlPlanePublicIP)
+
+        if "workerMachineType" in r["data"]:
+          if type(r['data']['workerMachineType']) == "string":
+            workerMachineType = r['data']['workerMachineType']
+          print(">>> DEBUG >>> data.workerMachineType:", workerMachineType)
+
+        if "workerMachineAmiId" in r["data"]:
+          if type(r['data']['workerMachineAmiId']) == "string":
+            workerMachineAmiId = r['data']['workerMachineAmiId']
+          print(">>> DEBUG >>> data.workerMachineAmiId:", workerMachineAmiId)
+
+        if "workerMachineRootVolume" in r["data"]:
+          # int 으로 넘어올 수 있으므로 무조건 string 으로 변환 후 처리, 혹시 공백과 따옴표가 붙어올 수 있으므로 제거
+          strWorkerMachineRootVolume = str(r['data']['workerMachineRootVolume']).strip(" \"")
+          if len(strWorkerMachineRootVolume) > 0 :
+            print(">>> DEBUG >>> data.strWorkerMachineRootVolume:", strWorkerMachineRootVolume, ",Compare:", int(strWorkerMachineRootVolume))
+            # packageContext.data 에서는 string 으로 처리되지만, topology 에서는 int 으로 정의되어 있어서 type 변환
+            intWorkerMachineRootVolume = int(strWorkerMachineRootVolume)
+          else:
+            print(">>> DEBUG >>> data.strWorkerMachineRootVolume:", strWorkerMachineRootVolume, ",Compare: nil")
+          print(">>> DEBUG >>> data.workerMachineRootVolume:", intWorkerMachineRootVolume)
+
+        if "workerMachinePublicIP" in r["data"]:
+          # bool 으로 넘어올 수 있으므로 무조건 string 으로 변환 후 처리, 혹시 공백과 따옴표가 붙어올 수 있으므로 제거
+          strWorkerMachinePublicIP = str(r['data']['workerMachinePublicIP']).strip(" \"")
+          if len(strWorkerMachinePublicIP) > 0 :
+            print(">>> DEBUG >>> data.strWorkerMachinePublicIP:", strWorkerMachinePublicIP, ",Compare:", bool(strWorkerMachinePublicIP.upper() == "TRUE"))
+            # packageContext.data 에서는 string 으로 처리되지만, topology 에서는 boolean으로 정의되어 있어서 type 변환
+            boolWorkerMachinePublicIP = bool(strWorkerMachinePublicIP.upper() == "TRUE")
+          else:
+            print(">>> DEBUG >>> data.strWorkerMachinePublicIP:", strWorkerMachinePublicIP, ",Compare: nil")
+          print(">>> DEBUG >>> data.workerMachinePublicIP:", boolWorkerMachinePublicIP)
+
+        if "bastionEnabled" in r["data"]:
+          # bool 으로 넘어올 수 있으므로 무조건 string 으로 변환 후 처리, 혹시 공백과 따옴표가 붙어올 수 있으므로 제거
+          strBastionEnabled = str(r['data']['bastionEnabled']).strip(" \"")
+          if len(strBastionEnabled) > 0 :
+            print(">>> DEBUG >>> data.strBastionEnabled:", strBastionEnabled, ",Compare:", bool(strBastionEnabled.upper() == "TRUE"))
+            # packageContext.data 에서는 string 으로 처리되지만, topology 에서는 boolean으로 정의되어 있어서 type 변환
+            boolBastionEnabled = bool(strBastionEnabled.upper() == "TRUE")
+          else:
+            print(">>> DEBUG >>> data.strBastionEnabled:", strBastionEnabled, ",Compare: nil")
+          print(">>> DEBUG >>> data.bastionEnabled:", boolBastionEnabled)
+
+        if "bastionAmiId" in r["data"]:
+          if type(r['data']['bastionAmiId']) == "string":
+            bastionAmiId = r['data']['bastionAmiId']
+          print(">>> DEBUG >>> data.bastionAmiId:", bastionAmiId)
+
+        if "vpcAZUsageLimit" in r["data"]:
+          # int 으로 넘어올 수 있으므로 무조건 string 으로 변환 후 처리, 혹시 공백과 따옴표가 붙어올 수 있으므로 제거
+          strVpcAZUsageLimit = str(r['data']['vpcAZUsageLimit']).strip(" \"")
+          if len(strVpcAZUsageLimit) > 0 :
+            print(">>> DEBUG >>> data.strVpcAZUsageLimit:", strVpcAZUsageLimit, ",Compare:", int(strVpcAZUsageLimit))
+            # packageContext.data 에서는 string 으로 처리되지만, topology 에서는 int 으로 정의되어 있어서 type 변환
+            intVpcAZUsageLimit = int(strVpcAZUsageLimit)
+          else:
+            print(">>> DEBUG >>> data.strVpcAZUsageLimit:", strVpcAZUsageLimit, ",Compare: nil")
+          print(">>> DEBUG >>> data.vpcAZUsageLimit:", intVpcAZUsageLimit)
+
+        if "vpcId" in r["data"]:
+          if type(r['data']['vpcId']) == "string":
+            vpcId = r['data']['vpcId']
+          print(">>> DEBUG >>> data.vpcId:", vpcId)
+
+        if "internetGatewayId" in r["data"]:
+          if type(r['data']['internetGatewayId']) == "string":
+            internetGatewayId = r['data']['internetGatewayId']
+          print(">>> DEBUG >>> data.internetGatewayId:", internetGatewayId)
+
+        if "subnetsIds" in r["data"]:
+          if type(r['data']['subnetsIds']) == "string":
+            strSubnetsIds = str(r['data']['subnetsIds']).strip(" \"")
+            if len(strSubnetsIds) > 0 :
+              # packageContext.data 에서는 string 으로 처리되지만, topology 에서는 배열로 정의되어 있어서 type 변환
+              arrSubnetsIds = [az.strip() for az in strSubnetsIds.split(",")]
+            print(">>> DEBUG >>> data.subnetsIds:", arrSubnetsIds)
+          else:
+            print(">>> DEBUG >>> data.subnetsIds.type", type(r['data']['subnetsIds']))
+        if "securityGroupOverrideControlPlane" in r["data"]:
+          if type(r['data']['securityGroupOverrideControlPlane']) == "string":
+            securityGroupOverrideControlPlane = r['data']['securityGroupOverrideControlPlane']
+          print(">>> DEBUG >>> data.securityGroupOverrideControlPlane:", securityGroupOverrideControlPlane)
+
+        if "securityGroupOverrideApiserverLB" in r["data"]:
+          if type(r['data']['securityGroupOverrideApiserverLB']) == "string":
+            securityGroupOverrideApiserverLB = r['data']['securityGroupOverrideApiserverLB']
+          print(">>> DEBUG >>> data.securityGroupOverrideApiserverLB:", securityGroupOverrideApiserverLB)
+
+        if "securityGroupOverrideNode" in r["data"]:
+          if type(r['data']['securityGroupOverrideNode']) == "string":
+            securityGroupOverrideNode = r['data']['securityGroupOverrideNode']
+          print(">>> DEBUG >>> data.securityGroupOverrideNode:", securityGroupOverrideNode)
+
+        if "securityGroupOverrideLB" in r["data"]:
+          if type(r['data']['securityGroupOverrideLB']) == "string":
+            securityGroupOverrideLB = r['data']['securityGroupOverrideLB']
+          print(">>> DEBUG >>> data.securityGroupOverrideLB:", securityGroupOverrideLB)
+
+        if "securityGroupOverrideBastion" in r["data"]:
+          if type(r['data']['securityGroupOverrideBastion']) == "string":
+            securityGroupOverrideBastion = r['data']['securityGroupOverrideBastion']
+          print(">>> DEBUG >>> data.securityGroupOverrideBastion:", securityGroupOverrideBastion)
+
+    print(">>> DEBUG >>> region:", region)
+    for r in resources:
+      if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "Cluster"):
+        for v in r["spec"]["topology"]["variables"]:
+          if v["name"] == "region":
+            v["value"] = region
+            print(">>> DEBUG >>> spec.tolopogy.variables.region:", region)
+
+          if v["name"] == "sshKeyName":
+            v["value"] = sshKeyName
+            print(">>> DEBUG >>> spec.tolopogy.variables.sshKeyName:", sshKeyName)
+
+          if v["name"] == "controlPlaneMachineType":
+            v["value"] = controlPlaneMachineType
+            print(">>> DEBUG >>> spec.tolopogy.variables.controlPlaneMachineType:", controlPlaneMachineType)
+
+          if v["name"] == "controlPlaneMachineAmiId":
+            v["value"] = controlPlaneMachineAmiId
+            print(">>> DEBUG >>> spec.tolopogy.variables.controlPlaneMachineAmiId:", controlPlaneMachineAmiId)
+
+          if v["name"] == "controlPlaneMachineRootVolume":
+            if type(intControlPlaneMachineRootVolume) == "int":
+              v["value"] = intControlPlaneMachineRootVolume
+            print(">>> DEBUG >>> spec.tolopogy.variables.controlPlaneMachineRootVolume:", intControlPlaneMachineRootVolume, ",Type:", type(intControlPlaneMachineRootVolume))
+
+          if v["name"] == "controlPlanePublicIP":
+            if type(boolControlPlanePublicIP) == "bool":
+              v["value"] = boolControlPlanePublicIP
+            print(">>> DEBUG >>> spec.tolopogy.variables.controlPlanePublicIP:", boolControlPlanePublicIP, ",Type:", type(boolControlPlanePublicIP))
+
+          if v["name"] == "workerMachineType":
+            v["value"] = workerMachineType
+            print(">>> DEBUG >>> spec.tolopogy.variables.workerMachineType:", workerMachineType)
+
+          if v["name"] == "workerMachineAmiId":
+            v["value"] = workerMachineAmiId
+            print(">>> DEBUG >>> spec.tolopogy.variables.workerMachineAmiId:", workerMachineAmiId)
+
+          if v["name"] == "workerMachineRootVolume":
+            if type(intWorkerMachineRootVolume) == "int":
+              v["value"] = intWorkerMachineRootVolume
+            print(">>> DEBUG >>> spec.tolopogy.variables.workerMachineRootVolume:", intWorkerMachineRootVolume, ",Type:", type(intWorkerMachineRootVolume))
+
+          if v["name"] == "workerMachinePublicIP":
+            if type(boolWorkerMachinePublicIP) == "bool":
+              v["value"] = boolWorkerMachinePublicIP
+            print(">>> DEBUG >>> spec.tolopogy.variables.workerMachinePublicIP:", boolWorkerMachinePublicIP, ",Type:", type(boolWorkerMachinePublicIP))
+
+          if v["name"] == "bastionEnabled":
+            if type(boolBastionEnabled) == "bool":
+              v["value"] = boolBastionEnabled
+            print(">>> DEBUG >>> spec.tolopogy.variables.bastionEnabled:", boolBastionEnabled, ",Type:", type(boolBastionEnabled))
+
+          if v["name"] == "bastionAmiId":
+            v["value"] = bastionAmiId
+            print(">>> DEBUG >>> spec.tolopogy.variables.bastionAmiId:", bastionAmiId)
+
+          if v["name"] == "vpcAZUsageLimit":
+            if type(intVpcAZUsageLimit) == "int":
+              v["value"] = intVpcAZUsageLimit
+            print(">>> DEBUG >>> spec.tolopogy.variables.vpcAZUsageLimit:", intVpcAZUsageLimit, ",Type:", type(intVpcAZUsageLimit))
+
+          if v["name"] == "vpcId":
+            v["value"] = vpcId
+            print(">>> DEBUG >>> spec.tolopogy.variables.vpcId:", vpcId)
+
+          if v["name"] == "internetGatewayId":
+            v["value"] = internetGatewayId
+            print(">>> DEBUG >>> spec.tolopogy.variables.internetGatewayId:", internetGatewayId)
+
+          if v["name"] == "subnetsIds":
+            v["value"] = arrSubnetsIds
+            print(">>> DEBUG >>> spec.tolopogy.variables.subnetsIds:", arrSubnetsIds, ",Type:", type(arrSubnetsIds))
+
+          if v["name"] == "securityGroupOverrideControlPlane":
+            v["value"] = securityGroupOverrideControlPlane
+            print(">>> DEBUG >>> spec.tolopogy.variables.securityGroupOverrideControlPlane:", securityGroupOverrideControlPlane)
+          if v["name"] == "securityGroupOverrideApiserverLB":
+            v["value"] = securityGroupOverrideApiserverLB
+            print(">>> DEBUG >>> spec.tolopogy.variables.securityGroupOverrideApiserverLB:", securityGroupOverrideApiserverLB)
+          if v["name"] == "securityGroupOverrideNode":
+            v["value"] = securityGroupOverrideNode
+            print(">>> DEBUG >>> spec.tolopogy.variables.securityGroupOverrideNode:", securityGroupOverrideNode)
+          if v["name"] == "securityGroupOverrideLB":
+            v["value"] = securityGroupOverrideLB
+            print(">>> DEBUG >>> spec.tolopogy.variables.securityGroupOverrideLB:", securityGroupOverrideLB)
+          if v["name"] == "securityGroupOverrideBastion":
+            v["value"] = securityGroupOverrideBastion
+            print(">>> DEBUG >>> spec.tolopogy.variables.securityGroupOverrideBastion:", securityGroupOverrideBastion)
+
+    print(">>> DEBUG >>> cluster-capi-aws.set_values >>> DONE")
+    
+  set_values(ctx.resource_list["items"])

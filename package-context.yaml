@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kptfile.kpt.dev
+  annotations:
+    config.kubernetes.io/local-config: "true"
+data:
+  name: example
+  region: ap-northeast-2
+  sshKeyName: ec2-keypair
+  controlPlaneMachineType: t3.medium
+  controlPlaneMachineRootVolume: 8
+  controlPlanePublicIP: false
+  workerMachineType: t3.medium
+  workerMachineRootVolume: 8
+  workerMachinePublicIP: false
+  bastionEnabled: false
+  vpcAZUsageLimit: 1
